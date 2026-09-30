@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESG Automation Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --primary: #38bdf8;
+            --primary-hover: #0ea5e9;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.05), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(129, 140, 248, 0.05), transparent 25%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            flex: 1;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .panel h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: var(--text-main);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input[type="text"], input[type="number"], input[type="file"] {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary), #2563eb);
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.25);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            background: #475569;
+            box-shadow: none;
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #b91c1c);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.25);
+        }
+        
+        .btn-danger:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .logs-container {
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+            color: #a7f3d0;
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .logs-container div {
+            margin-bottom: 0.25rem;
+        }
+
+        .data-table-container {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        th {
+            background: rgba(255,255,255,0.02);
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            position: sticky;
+            top: 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-pending { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
+        .status-success { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .status-error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>ESG Control Center</h1>
+    </div>
+
+    <div class="container">
+        <!-- Controls Panel -->
+        <div class="panel">
+            <h2>Configuration</h2>
+            
+            <div id="accountsContainer">
+                <div class="form-group account-entry" style="border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; position: relative;">
+                    <button class="remove-account-btn" onclick="this.parentElement.remove()" style="position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: var(--danger); cursor: pointer;" title="Remove Account">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                    <div style="margin-bottom: 0.5rem;">
+                        <label>Username (Email)</label>
+                        <input type="text" class="loginUsername" placeholder="Enter your email" style="width: 100%; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label>Password</label>
+                        <input type="password" class="loginPassword" placeholder="Enter your password" style="width: 100%; box-sizing: border-box; background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255,255,255,0.2); padding: 0.75rem 1rem; border-radius: 8px; color: var(--text-main); font-family: 'Outfit', sans-serif; font-size: 1rem;">
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn" style="background: rgba(255,255,255,0.1); box-shadow: none;" onclick="addAccountField()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add Another Account
+            </button>
+
+            <div class="form-group">
+                <label>Wait Before Generation (ms)</label>
+                <input type="number" id="waitMs" value="50" min="0" step="50">
+            </div>
+
+            <div class="form-group" style="margin-top: 1rem;">
+                <label>Scheduled Start Time (Optional, Format: HH:MM:SS)</label>
+                <input type="time" id="scheduledTime" step="1" style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255,255,255,0.2); padding: 0.75rem 1rem; border-radius: 8px; color: var(--text-main); font-family: 'Outfit', sans-serif; font-size: 1rem; width: 100%;">
+            </div>
+
+            <div class="form-group" style="margin-top: 2rem;">
+                <label>Data Entry Mode</label>
+                <select id="dataMode" onchange="toggleDataMode()" style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255,255,255,0.2); padding: 0.75rem 1rem; border-radius: 8px; color: var(--text-main); font-family: 'Outfit', sans-serif; font-size: 1rem; margin-bottom: 1rem;">
+                    <option value="excel">Upload Excel File</option>
+                    <option value="manual">Manual Entry</option>
+                </select>
+            </div>
+
+            <div id="excelModeContainer" class="form-group">
+                <label>Upload Excel File</label>
+                <input type="file" id="fileInput" accept=".xlsx, .xls, .csv">
+            </div>
+            
+            <div id="manualModeContainer" class="form-group" style="display: none;">
+                <label>Manual Truck Entry</label>
+                <div id="manualRowsContainer"></div>
+                <button class="btn" style="background: rgba(255,255,255,0.1); box-shadow: none; margin-top: 10px;" onclick="addManualRow()">
+                    + Add Truck
+                </button>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button class="btn" id="startBtn" style="flex: 1;" onclick="startAutomation()" disabled>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    Start
+                </button>
+                <button class="btn btn-danger" id="stopBtn" style="flex: 1;" onclick="stopAutomation()" disabled>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                    Stop
+                </button>
+                <button class="btn" id="downloadBtn" style="flex: 1; background: var(--success); display: none;" onclick="downloadReport()">
+                    Download Report (CSV)
+                </button>
+            </div>
+
+            <h2 style="margin-top: 1rem; padding-bottom: 0.5rem;">Live Logs</h2>
+            <div class="logs-container" id="logsContainer">
+                <div style="color: var(--text-muted);">Waiting for input...</div>
+            </div>
+        </div>
+
+        <!-- Data Panel -->
+        <div class="panel">
+            <h2>Data Preview & Status</h2>
+            <div class="data-table-container">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Account</th>
+                            <th>Source Code</th>
+                            <th>Truck No</th>
+                            <th>Material</th>
+                            <th>Status</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: var(--text-muted);">Add data to preview.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedFilepath = null;
+        let pollInterval = null;
+
+        const fileInput = document.getElementById('fileInput');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const tableBody = document.getElementById('tableBody');
+        const logsContainer = document.getElementById('logsContainer');
+        
+        let excelDataCache = [];
+
+        function addAccountField() {
+            const container = document.getElementById('accountsContainer');
+            const newDiv = document.createElement('div');
+            newDiv.className = 'form-group account-entry';
+            newDiv.style = 'border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; position: relative;';
+            newDiv.innerHTML = `
+                <button class="remove-account-btn" onclick="this.parentElement.remove(); renderTable();" style="position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: var(--danger); cursor: pointer;" title="Remove Account">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <div style="margin-bottom: 0.5rem;">
+                    <label>Username (Email)</label>
+                    <input type="text" class="loginUsername" placeholder="Enter your email" style="width: 100%; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label>Password</label>
+                    <input type="password" class="loginPassword" placeholder="Enter your password" style="width: 100%; box-sizing: border-box; background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255,255,255,0.2); padding: 0.75rem 1rem; border-radius: 8px; color: var(--text-main); font-family: 'Outfit', sans-serif; font-size: 1rem;">
+                </div>
+            `;
+            container.appendChild(newDiv);
+            
+            // Re-render table to add new account's rows
+            renderTable();
+        }
+
+        // Whenever an account's username changes, update the table view
+        document.getElementById('accountsContainer').addEventListener('input', (e) => {
+             if (e.target.classList.contains('loginUsername')) {
+                  renderTable();
+             }
+        });
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const json = await res.json();
+                
+                if (res.ok) {
+                    uploadedFilepath = json.filepath;
+                    startBtn.disabled = false;
+                    excelDataCache = json.data;
+                    renderTable();
+                    addLog('File uploaded and parsed successfully.');
+                } else {
+                    alert(json.error);
+                    addLog('Error uploading file: ' + json.error);
+                }
+            } catch (err) {
+                alert('Upload failed');
+                addLog('Upload failed: ' + err.message);
+            }
+        });
+
+        function getActiveAccounts() {
+             const entries = document.querySelectorAll('.account-entry');
+             let accounts = [];
+             entries.forEach(entry => {
+                  const u = entry.querySelector('.loginUsername').value.trim();
+                  const p = entry.querySelector('.loginPassword').value.trim();
+                  if (u && p) {
+                       accounts.push({ username: u, password: p });
+                  } else if (u || p) {
+                       // Only partly filled
+                       accounts.push({ username: u, password: p, incomplete: true });
+                  }
+             });
+             return accounts;
+        }
+
+        function toggleDataMode() {
+            const mode = document.getElementById('dataMode').value;
+            if (mode === 'excel') {
+                document.getElementById('excelModeContainer').style.display = 'block';
+                document.getElementById('manualModeContainer').style.display = 'none';
+                renderTable();
+            } else {
+                document.getElementById('excelModeContainer').style.display = 'none';
+                document.getElementById('manualModeContainer').style.display = 'block';
+                if (document.querySelectorAll('.manual-row').length === 0) {
+                    addManualRow();
+                }
+                renderTable();
+            }
+        }
+        
+        function addManualRow() {
+            const container = document.getElementById('manualRowsContainer');
+            const row = document.createElement('div');
+            row.className = 'manual-row';
+            row.style = 'display: flex; gap: 10px; margin-bottom: 10px;';
+            row.innerHTML = `
+                <input type="text" class="m-src" placeholder="Source Code" style="flex: 1;" oninput="renderTable()">
+                <input type="text" class="m-trk" placeholder="Truck No" style="flex: 1;" oninput="renderTable()">
+                <input type="text" class="m-mat" placeholder="Material" style="flex: 1;" oninput="renderTable()">
+                <button onclick="this.parentElement.remove(); renderTable();" style="background: var(--danger); border: none; border-radius: 4px; color: white; cursor: pointer; padding: 0 10px;">X</button>
+            `;
+            container.appendChild(row);
+            renderTable();
+        }
+
+        function getRecords() {
+            const mode = document.getElementById('dataMode').value;
+            let records = [];
+            if (mode === 'excel') {
+                records = excelDataCache;
+            } else {
+                document.querySelectorAll('.manual-row').forEach(row => {
+                    const src = row.querySelector('.m-src').value.trim();
+                    const trk = row.querySelector('.m-trk').value.trim();
+                    const mat = row.querySelector('.m-mat').value.trim();
+                    if (src || trk || mat) {
+                        records.push({ sourceCode: src, truckNo: trk, material: mat });
+                    }
+                });
+            }
+            
+            // Assign global_index to all records so backend can report correctly
+            records.forEach((r, idx) => r.global_index = idx);
+            return records;
+        }
+
+        function renderTable() {
+            const records = getRecords();
+            if (!records.length) {
+                tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Add data to preview.</td></tr>';
+                document.getElementById('downloadBtn').style.display = 'none';
+                startBtn.disabled = true;
+                return;
+            }
+            startBtn.disabled = false;
+            
+            tableBody.innerHTML = '';
+            
+            records.forEach((row, i) => {
+                 const tr = document.createElement('tr');
+                 tr.id = `row-${i}`;
+                 tr.innerHTML = `
+                     <td>${i + 1}</td>
+                     <td id="acc-${i}" style="color: var(--primary); font-weight: 600;">-</td>
+                     <td>${row.sourceCode || ''}</td>
+                     <td>${row.truckNo || ''}</td>
+                     <td>${row.material || ''}</td>
+                     <td><span class="status-badge status-pending" id="status-${i}">Pending</span></td>
+                     <td id="msg-${i}">-</td>
+                 `;
+                 tableBody.appendChild(tr);
+            });
+        }
+
+        async function startAutomation() {
+            const records = getRecords();
+            const accounts = getActiveAccounts();
+            const waitMs = document.getElementById('waitMs').value;
+            const scheduledTime = document.getElementById('scheduledTime').value;
+
+            if (accounts.length === 0) {
+                alert("Please add at least one account.");
+                return;
+            }
+            if (accounts.some(a => a.incomplete)) {
+                alert("Please ensure all added accounts have both a username and password filled in.");
+                return;
+            }
+
+            if (records.length === 0) {
+                alert("Please upload an Excel file or add manual truck entries before starting.");
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        records: records,
+                        accounts: accounts,
+                        wait_ms: waitMs,
+                        scheduled_time: scheduledTime
+                    })
+                });
+
+                if (res.ok) {
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    document.getElementById('downloadBtn').style.display = 'none';
+                    logsContainer.innerHTML = '';
+                    pollStatus();
+                } else {
+                    const data = await res.json();
+                    alert(data.error);
+                }
+            } catch (err) {
+                alert('Failed to start');
+            }
+        }
+
+        async function stopAutomation() {
+            try {
+                await fetch('/api/stop', { method: 'POST' });
+                addLog('Stop requested...');
+                stopBtn.disabled = true;
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function pollStatus() {
+            if (pollInterval) clearInterval(pollInterval);
+            
+            let lastLogCount = 0;
+
+            pollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch('/api/status');
+                    const data = await res.json();
+
+                    // Update Logs
+                    if (data.logs.length > lastLogCount) {
+                        for (let i = lastLogCount; i < data.logs.length; i++) {
+                            addLog(data.logs[i]);
+                        }
+                        lastLogCount = data.logs.length;
+                    }
+
+                    // Update Results
+                    data.results.forEach(res => {
+                        const idx = res.index;
+                        const statusBadge = document.getElementById(`status-${idx}`);
+                        const msgCell = document.getElementById(`msg-${idx}`);
+                        const accCell = document.getElementById(`acc-${idx}`);
+                        
+                        if (statusBadge && msgCell) {
+                            statusBadge.textContent = res.status;
+                            statusBadge.className = `status-badge ${res.status === 'Success' ? 'status-success' : 'status-error'}`;
+                            msgCell.textContent = res.message || '-';
+                        }
+                        if (accCell && res.username) {
+                            accCell.textContent = res.username;
+                        }
+                    });
+
+                    if (!data.is_running) {
+                        clearInterval(pollInterval);
+                        startBtn.disabled = false;
+                        stopBtn.disabled = true;
+                        document.getElementById('downloadBtn').style.display = 'block';
+                        addLog('Automation finished.');
+                    }
+                } catch (err) {
+                    console.error("Poll error", err);
+                }
+            }, 1000);
+        }
+
+        function addLog(msg) {
+            const div = document.createElement('div');
+            const time = new Date().toLocaleTimeString();
+            div.textContent = `[${time}] ${msg}`;
+            logsContainer.appendChild(div);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        function downloadReport() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Index,Account,Source Code,Truck No,Material,Status,Message\n";
+            
+            const rows = document.querySelectorAll('#tableBody tr');
+            rows.forEach(row => {
+                // Check if row has data (skip placeholder)
+                if (row.cells.length < 2) return;
+                
+                let rowData = [];
+                for (let i = 0; i < row.cells.length; i++) {
+                    // Extract text, escape quotes
+                    let text = row.cells[i].innerText.replace(/"/g, '""');
+                    rowData.push(`"${text}"`);
+                }
+                csvContent += rowData.join(",") + "\n";
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `automation_report_${new Date().getTime()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
