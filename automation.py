@@ -51,7 +51,7 @@ def select_option_by_text(page, selector, text, field_name, timeout=15000):
     raise TimeoutError(f"{field_name} option '{text}' did not load or was not found within {timeout}ms.")
 
 
-def run_automation(records, username, password, wait_ms, state, log_cb, scheduled_time=None, time_offset=0):
+def run_automation(records, username, password, wait_ms, state, log_cb, scheduled_time=None):
     def l(msg):
         log_cb(f"[{username}] {msg}")
         
@@ -122,7 +122,7 @@ def run_automation(records, username, password, wait_ms, state, log_cb, schedule
             wait_for_select_options(page, SOURCE_SITE_SELECTOR, "Source Site")
             
             if scheduled_time:
-                l(f"Waiting for synchronized scheduled time: {scheduled_time}")
+                l(f"Waiting for computer's scheduled time: {scheduled_time}")
                 target_time = datetime.datetime.strptime(scheduled_time, "%H:%M:%S").time()
                 while True:
                     if state["should_stop"]:
@@ -130,15 +130,13 @@ def run_automation(records, username, password, wait_ms, state, log_cb, schedule
                         return
                         
                     now = datetime.datetime.now()
-                    true_local_now = now + datetime.timedelta(seconds=time_offset)
                     target = datetime.datetime.combine(now.date(), target_time)
                     
-                    diff = (target - true_local_now).total_seconds()
+                    diff = (target - now).total_seconds()
                     if diff <= 0:
                         break
-                        
-                    # Sleep in small chunks so we can respond to stops
-                    time.sleep(min(0.2, diff))
+                    if diff > 0.05:
+                        time.sleep(min(0.1, diff - 0.05))
                 
                 l("Time reached. Blasting!")
             

@@ -4,8 +4,6 @@ from flask import Flask, render_template, request, jsonify
 from werkzeug.utils import secure_filename
 import pandas as pd
 import json
-import requests
-import datetime
 from concurrent.futures import ThreadPoolExecutor
 
 from automation import run_automation
@@ -142,21 +140,8 @@ def start_automation():
     automation_state["logs"] = []
     automation_state["results"] = []
     
-    # Get true time offset
-    time_offset = 0
-    if scheduled_time:
-        try:
-            res = requests.head('https://google.com')
-            date_str = res.headers['Date']
-            true_utc = datetime.datetime.strptime(date_str, "%a, %d %b %Y %H:%M:%S GMT")
-            local_utc = datetime.datetime.utcnow()
-            time_offset = (true_utc - local_utc).total_seconds()
-            print(f"Time offset calculated: {time_offset} seconds")
-        except Exception as e:
-            print(f"Could not fetch true time, using local clock. Error: {e}")
-            
     # Run in background
-    thread = threading.Thread(target=run_automation_wrapper, args=(records, accounts, wait_ms, scheduled_time, time_offset))
+    thread = threading.Thread(target=run_automation_wrapper, args=(records, accounts, wait_ms, scheduled_time))
     thread.start()
     
     return jsonify({"message": "Started automation"})
@@ -181,14 +166,14 @@ def chunk_list(lst, n):
     k, m = divmod(len(lst), n)
     return [lst[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n)]
 
-def run_automation_wrapper(records, accounts, wait_ms, scheduled_time, time_offset):
+def run_automation_wrapper(records, accounts, wait_ms, scheduled_time):
     try:
         # Load balance: chunk records evenly across accounts
         chunks = chunk_list(records, len(accounts))
         
         with ThreadPoolExecutor(max_workers=len(accounts)) as executor:
             for i, acc in enumerate(accounts):
-                executor.submit(run_automation, chunks[i], acc.get('username'), acc.get('password'), wait_ms, automation_state, log_message, scheduled_time, time_offset)
+                executor.submit(run_automation, chunks[i], acc.get('username'), acc.get('password'), wait_ms, automation_state, log_message, scheduled_time)
     except Exception as e:
         log_message(f"Fatal error: {str(e)}")
     finally:
